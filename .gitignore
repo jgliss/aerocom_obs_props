@@ -102,3 +102,12 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# output directory
+output/
+
+# certain file types
+*.pdf
+*.aux
+*.log
+*.gz
