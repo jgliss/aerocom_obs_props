@@ -34,7 +34,7 @@ def load_result_files(out_dir = EVAL.OUT_DIR_RESULTS):
     files = os.listdir(out_dir)
     results = []
     for file in files:
-        print(file)
+        print('Reading result file {}'.format(file))
         info = get_info_filename(file)
         info['data'] = pd.DataFrame.from_csv(os.path.join(out_dir, file))
         results.append(info)
@@ -47,28 +47,39 @@ def calc_stats(results):
         result.update(EVAL.calc_statistics(model, obs))
     return results
 
-def to_multiindex_dataframes(results):
-    bias = {}
-    rms = {}
-    R_pearson = {}
+def to_multiindex_dataframe(results):
+    header = ['Model', 'Year', 'Variable', 'Obs', 'Bias', 'RMS', 'R']
+    data = []
     for r in results:
-        idx = (r['model_id'], str(r['year']), r['var'], r['obs_id'])
-        if idx in bias:
-            raise Exception
-        bias[idx] = r['nmb']
-        rms[idx] = r['rms']
-        R_pearson[idx] = r['R_pearson']
-    return (bias, rms, R_pearson)
+        file_data = [r['model_id'], r['year'], r['var'], r['obs_id'],
+                     r['nmb'], r['rms'], r['R_pearson']]
+        data.append(file_data)
+    df = pd.DataFrame(data, columns=header)
+    df.set_index(['Model', 'Year', 'Variable', 'Obs'], inplace=True)
+    return df
 
 if __name__=="__main__":
     results = load_result_files()
     results = calc_stats(results)
     
-    bias, rms, R_pearson = to_multiindex_dataframes(results)
-                                
-    s = pd.Series(bias)
+    result= to_multiindex_dataframe(results)
     
-    print(s)
+    print(result)
+    
+    from seaborn import heatmap
+    
+    bias = result['Bias']
+    
+    print(bias)
+    
+    hea    
+    
+# =============================================================================
+#     s = pd.Series(bias)
+#     s2 = pd.Series(rms)
+#     
+# =============================================================================
+    #pd.Dat
                             
                             
                                 
