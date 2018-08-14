@@ -250,7 +250,7 @@ if __name__=="__main__":
     helpers.print_file(MODEL_INFO_FILE)
     
     RUN_EVAL = 1
-    RELOAD = 0
+    RELOAD = 1
     TEST_FIRST = 0
     PLOT_STATIONS = 0
 
