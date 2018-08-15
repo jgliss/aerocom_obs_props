@@ -6,7 +6,7 @@ Script for intercomparison of optical properties between models and
 import helpers as helpers
 import os
 from collections import OrderedDict as od
-import iris
+
 from time import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -62,10 +62,7 @@ TS_TYPE_TO_PANDAS_FREQ = {'hourly'  :   'H',
                           'daily'   :   'D',
                           'monthly' :   'M'}
 
-IRIS_AGGREGATORS = {'hourly'    :   iris.coord_categorisation.add_hour,
-                    'daily'     :   iris.coord_categorisation.add_day_of_year,
-                    'monthly'   :   iris.coord_categorisation.add_month_number} 
- 
+
 VARS = []
 for k, v in UNGRIDDED_OBS_NETWORKS.items():
     if isinstance(v, str):
@@ -74,33 +71,7 @@ for k, v in UNGRIDDED_OBS_NETWORKS.items():
         VARS.extend(v)
 VARS = list(dict.fromkeys(VARS))
 
-def downscale_time(gridded_data, to_ts_type='monthly'):
-    """Downscale gridded data to monthly resolution"""
-# =============================================================================
-#     if not isinstance(gridded_data, pya.griddeddata.GriddedData):
-#         raise TypeError('Invalid input, need instance of GriddedData class, '
-#                         'got {}'.format(type(gridded_data)))
-# =============================================================================
-    ts_types_avail = pya.const.GRID_IO.TS_TYPES
-    idx_ts_type = ts_types_avail.index(to_ts_type)
-    ts_type = gridded_data.ts_type
-    if ts_type == to_ts_type:
-        pya.logger.info('Data is already in {} resolution'.format(to_ts_type))
-        return gridded_data
-    if not ts_type in ts_types_avail:
-        raise pya.exceptions.TemporalResolutionError('Resolution {} cannot '
-            'converted'.format(ts_type))
-    elif ts_types_avail.index(ts_type) >= idx_ts_type:
-        raise pya.exceptions.TemporalResolutionError('Cannot increase '
-            'temporal resolution from {} to daily'.format(ts_type))
-    elif not to_ts_type in IRIS_AGGREGATORS:
-        raise NotImplementedError('Cannot convert to {} resolution'.format(to_ts_type))
-    cube = gridded_data.grid
-    IRIS_AGGREGATORS[to_ts_type](cube, 'time', name=to_ts_type)
-    aggregated = cube.aggregated_by(to_ts_type, iris.analysis.MEAN)
-    data = pya.GriddedData(aggregated, **gridded_data.suppl_info)
-    data.suppl_info['ts_type'] = to_ts_type
-    return data
+
 
 def chk_make_dir(base, name):
     d = os.path.join(base, name)
@@ -309,8 +280,9 @@ if __name__=="__main__":
             # we used the method read_individual_years above)
             data_cropped = model.crop(time_range=(start_str,
                                                        stop_str))
+            
             # converted to daily resolution (Aeronet is daily)
-            model_data = downscale_time(data_cropped, to_ts_type='monthly')
+            model_data = data_cropped.downscale_time(to_ts_type='monthly')
             
             RELOAD_SERIES = 1
             
