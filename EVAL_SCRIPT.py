@@ -103,7 +103,7 @@ if __name__=="__main__":
 ### OPTIONS 
     RELOAD = 1
     RUN_EVAL = 1
-    EVAL_UNGRIDDED = 1
+    EVAL_UNGRIDDED = 0
     EVAL_GRIDDED_OBS = 1
     TEST = 0
     PLOT_STATIONS = 0
@@ -139,7 +139,7 @@ if __name__=="__main__":
 ### ANALYSIS           
         PLOT_STATIONS = 0
         # temporal resolution
-        TS_TYPES = ['monthly']#, 'yearly']
+        TS_TYPES = ['yearly']#, 'yearly']
         
         filter_name = 'WORLD-noMOUNTAINS'
         for ts_type in TS_TYPES:

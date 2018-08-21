@@ -18,7 +18,6 @@ def load_result_files(out_dir=EVAL.OUT_DIR_RESULTS):
     files = os.listdir(out_dir)
     results = []
     for file in files:
-        print('Reading result file {}'.format(file))
         info = get_info_filename(file)
         info['model_id'] = info['data_source_idx'][1]
         info['obs_id'] = info['data_source_idx'][0]
@@ -36,14 +35,14 @@ def calc_stats(results):
     return results
 
 def to_multiindex_dataframe(results):
-    header = ['Model', 'Year', 'Variable', 'Obs', 'Bias', 'RMS', 'R', 'FGE']
+    header = ['Model', 'Year', 'Freq', 'Variable', 'Obs', 'Bias', 'RMS', 'R', 'FGE']
     data = []
     for r in results:
-        file_data = [r['model_id'], r['year'], r['var_name'], r['obs_id'],
+        file_data = [r['model_id'], r['year'], r['ts_type'], r['var_name'], r['obs_id'],
                      r['nmb'], r['rms'], r['R'], r['fge']]
         data.append(file_data)
     df = pd.DataFrame(data, columns=header)
-    df.set_index(['Model', 'Year', 'Variable', 'Obs'], inplace=True)
+    df.set_index(['Model', 'Year', 'Freq', 'Variable', 'Obs'], inplace=True)
     return df
 
 if __name__=="__main__":
