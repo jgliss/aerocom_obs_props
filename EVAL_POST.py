@@ -66,8 +66,6 @@ if __name__=="__main__":
     
     print(result)
     
-    from seaborn import heatmap
-    
     bias = result['Bias']
     
     print(bias)
