@@ -5,54 +5,42 @@ Script for intercomparison of optical properties between models and
 """
 import pandas as pd
 import numpy as np
+import pyaerocom as pya
 import os
 import EVAL_SCRIPT as EVAL
 ### GLOBAL SETTINGS
 
 def get_info_filename(fpath):
-    fname = os.path.basename(fpath).split('.csv')[0].strip()
-    
-    spl = fname.split('_')
-    if len(spl) == 7:
-        result = dict(var = spl[0],
-                      model_id = spl[1] + '_' + spl[2],
-                      obs_id = spl[3],
-                      year = int(spl[4]),
-                      ts_type = spl[5],
-                      filtername = spl[6])
-    else:
-        result = dict(var = spl[0],
-                      model_id = spl[1],
-                      obs_id = spl[2],
-                      year = int(spl[3]),
-                      ts_type = spl[4],
-                      filtername = spl[5])
-    return result
+    return pya.collocateddata.CollocatedData().get_meta_from_filename(fpath)
         
         
-def load_result_files(out_dir = EVAL.OUT_DIR_RESULTS):
+def load_result_files(out_dir=EVAL.OUT_DIR_RESULTS):
     files = os.listdir(out_dir)
     results = []
     for file in files:
         print('Reading result file {}'.format(file))
         info = get_info_filename(file)
+        info['model_id'] = info['data_source_idx'][1]
+        info['obs_id'] = info['data_source_idx'][0]
+        info['year'] = info['start'].year
         info['data'] = pd.DataFrame.from_csv(os.path.join(out_dir, file))
         results.append(info)
     return results
     
 def calc_stats(results):
     for result in results:
-        obs = result['data']['obs'].values
-        model = result['data']['model'].values
-        result.update(EVAL.calc_statistics(model, obs))
+        obs = result['data']['ref'].values
+        model = result['data']['data'].values
+        stats = pya.mathutils.calc_statistics(model, obs)
+        result.update(stats)
     return results
 
 def to_multiindex_dataframe(results):
-    header = ['Model', 'Year', 'Variable', 'Obs', 'Bias', 'RMS', 'R']
+    header = ['Model', 'Year', 'Variable', 'Obs', 'Bias', 'RMS', 'R', 'FGE']
     data = []
     for r in results:
-        file_data = [r['model_id'], r['year'], r['var'], r['obs_id'],
-                     r['nmb'], r['rms'], r['R_pearson']]
+        file_data = [r['model_id'], r['year'], r['var_name'], r['obs_id'],
+                     r['nmb'], r['rms'], r['R'], r['fge']]
         data.append(file_data)
     df = pd.DataFrame(data, columns=header)
     df.set_index(['Model', 'Year', 'Variable', 'Obs'], inplace=True)

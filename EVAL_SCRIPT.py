@@ -8,6 +8,7 @@ import os
 from collections import OrderedDict as od
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import pyaerocom as pya
 import logging
@@ -103,6 +104,7 @@ if __name__=="__main__":
     RELOAD = 1
     RUN_EVAL = 1
     EVAL_UNGRIDDED = 1
+    EVAL_GRIDDED_OBS = 1
     TEST = 0
     PLOT_STATIONS = 0
 
@@ -137,12 +139,9 @@ if __name__=="__main__":
 ### ANALYSIS           
         PLOT_STATIONS = 0
         # temporal resolution
-        TS_TYPES = ['monthly', 'yearly']
+        TS_TYPES = ['monthly']#, 'yearly']
         
-        filter_name = 'WORLD-wMOUNTAINS'
-
-        # init results dictionary
-        REEVAL = True
+        filter_name = 'WORLD-noMOUNTAINS'
         for ts_type in TS_TYPES:
             plotname = 'mALLYEAR{}'.format(ts_type)
             for model_id, model_reader in read_models.results.items():
@@ -152,55 +151,59 @@ if __name__=="__main__":
                     for var in VARS:
                         if not var in model_reader.vars:
                             continue
-                        for obs_id, obs_reader in read_gridded_obs.results.items():
-                            if var in obs_reader.vars and year in obs_reader.years:
-                                if year == 9999:
-                                    msg =('Ignoring climatology data (model: {}, '
-                                          'obs: {}). '
-                                          'Not yet implemented'.format(model_id,
-                                                                       obs_id)) 
-                                    print(msg)
-                                    with open(OUT_STATS, 'a') as f:
-                                        f.write('\n{}\n\n'.format(msg))
+                        
+                        if EVAL_GRIDDED_OBS:
+                            for obs_id, obs_reader in read_gridded_obs.results.items():
+                                if var in obs_reader.vars and year in obs_reader.years:
+                                    if year == 9999:
+                                        msg =('Ignoring climatology data (model: {}, '
+                                              'obs: {}). '
+                                              'Not yet implemented'.format(model_id,
+                                                                           obs_id)) 
+                                        print(msg)
+                                        raise Exception
+                                        with open(OUT_STATS, 'a') as f:
+                                            f.write('\n{}\n\n'.format(msg))
+                                        
+                                        continue
+                                    print('Analysing variable: {}\n'
+                                          'Model {} vs. obs {}\n'
+                                          'Year: {} ({} resolution)\n'
+                                          .format(var, model_id, obs_id, 
+                                                  year, ts_type))
+                                    model = model_reader.data_yearly[var][year]
+                                    obs = obs_reader.data_yearly[var][year]
                                     
-                                    continue
-                                print('Analysing variable: {}\n'
-                                      'Model {} vs. obs {}\n'
-                                      'Year: {} ({} resolution)\n'
-                                      .format(var, model_id, obs_id, 
-                                              year, ts_type))
-                                model = model_reader.data_yearly[var][year]
-                                obs = obs_reader.data_yearly[var][year]
-                                
-                                start_str = str(year) 
-                                stop_str = '{}-12-31 23:59:00'.format(year) 
-                                
-                                data = pya.collocation.collocate_gridded_gridded(
-                                                         model, obs,
-                                                         ts_type=ts_type,
-                                                         filter_name=filter_name)
-                                stats = data.calc_statistics()
-                                append_result(OUT_STATS, stats, 
-                                              model_id, obs_id, var, year, ts_type)
-                                save_name = ('{}_{}_{}_{}_{}_{}_SCATTER.png'
-                                             .format(var, model_id, obs_id, 
-                                                     year, ts_type, filter_name))
-                            
-                                add_note=False
-                                if np.isnan(stats['R']):
-                                    if sum(data.data.values[1].flatten()) != 0:
-                                        raise Exception('Check...')
-                                    add_note = True
-                                
-                                
-                                data.plot_scatter(savefig=True, 
-                                                  save_dir=OUT_DIR_SCAT,
-                                                  save_name=save_name, 
-                                                  add_data_missing_note=add_note)
-                                if TEST:
-                                    raise Exception
-                                plt.close('all')
-                                
+                                    start_str = str(year) 
+                                    stop_str = '{}-12-31 23:59:00'.format(year) 
+                                    
+                                    data = pya.collocation.collocate_gridded_gridded(
+                                                             model, obs,
+                                                             ts_type=ts_type,
+                                                             filter_name=filter_name)
+                                    
+                                    stats = data.calc_statistics()
+                                    append_result(OUT_STATS, stats, 
+                                                  model_id, obs_id, var, year, ts_type)
+                                    
+                                    add_note=False
+                                    if np.isnan(stats['R']):
+                                        if sum(data.data.values[1].flatten()) != 0:
+                                            raise Exception('Check...')
+                                        add_note = True
+                                    
+                                    save_name_fig = data.save_name_aerocom + '_SCAT.png'
+                                    data.plot_scatter(savefig=True, 
+                                                      save_dir=OUT_DIR_SCAT,
+                                                      save_name=save_name_fig, 
+                                                      add_data_missing_note=add_note)
+                                    
+                                    data.to_csv(OUT_DIR_RESULTS)
+                                    
+                                    if TEST:
+                                        raise Exception
+                                    plt.close('all')
+                                    
                         if EVAL_UNGRIDDED:       
                             for obs_id, ungridded_obs in ungridded_obs_all.items():
                                 if not var in ungridded_obs.contains_vars:
@@ -220,48 +223,36 @@ if __name__=="__main__":
                                       'Year: {} ({} resolution)\n'
                                       .format(var, model_id, obs_id, 
                                               year, ts_type))
-                                save_name_csv = ('{}_{}_{}_{}_{}_{}.csv'
-                                             .format(var, model_id, obs_id,  
-                                                     year, ts_type,
-                                                     filter_name))
-                                loc_csv = os.path.join(OUT_DIR_RESULTS,
-                                                       save_name_csv)
-                                if os.path.exists(loc_csv) and not REEVAL:
-                                    print('Result file {} already exists'
-                                          .format(loc_csv))
-                                else:
-                                    model = model_reader.data_yearly[var][year]
-                                    
-                                    start_str = str(year) 
-                                    stop_str = '{}-12-31 23:59:00'.format(year)      
-                                    
-                                    data = pya.collocation.collocate_gridded_ungridded_2D(
-                                                model, ungridded_obs, ts_type=ts_type, 
-                                               start=start_str, stop=stop_str, 
-                                               filter_name='WORLD-noMOUNTAINS')
-                                    
-                                    
-                                    stats = data.calc_statistics()
-                                    append_result(OUT_STATS, stats, 
-                                                  model_id, obs_id, var, year, ts_type)
-                                    save_name = ('{}_{}_{}_{}_{}_{}_SCATTER.png'
-                                                 .format(var, model_id, obs_id, 
-                                                         year, ts_type,
-                                                         filter_name))
-
-                                    add_note=False
-                                    if np.isnan(stats['R']):
-                                        if sum(data.data.values[1].flatten()) != 0:
-                                            raise Exception('Check...')
-                                        add_note = True
-                                    
-                                    
-                                    data.plot_scatter(savefig=True, 
-                                                      save_dir=OUT_DIR_SCAT,
-                                                      save_name=save_name, 
-                                                      add_data_missing_note=add_note)
-                                    
-                                    plt.close('all')
+                                
+                                model = model_reader.data_yearly[var][year]
+                                
+                                start_str = str(year) 
+                                stop_str = '{}-12-31 23:59:00'.format(year)      
+                                
+                                data = pya.collocation.collocate_gridded_ungridded_2D(
+                                            model, ungridded_obs, ts_type=ts_type, 
+                                           start=start_str, stop=stop_str, 
+                                           filter_name=filter_name)
+                                
+                                data.to_csv(OUT_DIR_RESULTS)
+                                
+                                stats = data.calc_statistics()
+                                append_result(OUT_STATS, stats, 
+                                              model_id, obs_id, var, year, ts_type)
+                            
+                                add_note=False
+                                if np.isnan(stats['R']):
+                                    if sum(data.data.values[1].flatten()) != 0:
+                                        raise Exception('Check...')
+                                    add_note = True
+                                
+                                save_name_fig = data.save_name_aerocom + '_SCAT.png'
+                                data.plot_scatter(savefig=True, 
+                                                  save_dir=OUT_DIR_SCAT,
+                                                  save_name=save_name_fig, 
+                                                  add_data_missing_note=add_note)
+                                
+                                plt.close('all')
                                     
                                 
                             
