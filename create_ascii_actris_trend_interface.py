@@ -38,7 +38,7 @@ def station_data_to_old_ascii(out_dir, station_data, var):
         f.write('      12\n')
         f.write('latitude:      {:.4f}\n'.format(s.latitude))
         f.write('longitude:      {:.4f}\n'.format(s.longitude))
-        f.write('altitude:      {:.4f}\n'.format(s.longitude))
+        f.write('altitude:      {:.4f}\n'.format(s.altitude))
         f.write('station name:{}\n'.format(name))
         f.write('\n\n\n\n\n')
         f.write(HEAD_LINE)
@@ -81,8 +81,8 @@ OUT_BASE = OUT_DIR
 OUT_DIRS_RESULTS['AeronetSunV2Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV2/'
 OUT_DIRS_RESULTS['AeronetSunV3Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV3/'
 OUT_DIRS_RESULTS['ECMWF_CAMS_REAN'] = od()
-OUT_DIRS_RESULTS['ECMWF_CAMS_REAN']['AeronetSunV2Lev2.daily'] = OUT_BASE + 'AERONETSunV2-ECMWF2018/'
-OUT_DIRS_RESULTS['ECMWF_CAMS_REAN']['AeronetSunV3Lev2.daily'] = OUT_BASE + 'AERONETSunV3-ECMWF2018/'
+OUT_DIRS_RESULTS['ECMWF_CAMS_REAN']['AeronetSunV2Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV2-ECMWF2018/'
+OUT_DIRS_RESULTS['ECMWF_CAMS_REAN']['AeronetSunV3Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV3-ECMWF2018/'
 
 for k, v in OUT_DIRS_RESULTS.items():
     if isinstance(v, str) and not os.path.exists(v):
@@ -94,7 +94,7 @@ for k, v in OUT_DIRS_RESULTS.items():
 
 
 
-INCLUDE_MODELS = False
+INCLUDE_MODELS = True
 EVAL = 1
 
 TS_TYPE='daily'
@@ -120,23 +120,39 @@ if __name__ == "__main__":
                 obs_all[network] = read_obs.read_dataset(
                         network, vars_to_retrieve=vars_to_retrieve)
         
-        data = obs_all['AeronetSunV2Lev2.daily']
-        
-        
-        stat_data = data.to_station_data_all(vars_to_convert=VARS,
-                                             start=START, 
-                                             stop=STOP, 
-                                             freq=PD_FREQ)
-        
-        for data in stat_data:
-            if data is not None:
-                for var in VARS:
-                    station_data_to_old_ascii(OUT_DIRS_RESULTS['AeronetSunV2Lev2.daily'], 
-                                              data, var)
-        #test_file = os.path.join()
         if INCLUDE_MODELS:
             model_reader = pya.io.ReadGriddedMulti(MODEL_LIST)
             model_reader.read(VARS)
+        
+        for obs_id, obs_data in obs_all.items():
+            stat_data = obs_data.to_station_data_all(vars_to_convert=VARS,
+                                                     start=START, 
+                                                     stop=STOP, 
+                                                     freq=PD_FREQ)
+            
+            for data in stat_data:
+                if data is not None:
+                    for var in VARS:
+                        station_data_to_old_ascii(OUT_DIRS_RESULTS[obs_id], 
+                                                  data, var)
+                        if INCLUDE_MODELS:
+                            for model in MODEL_LIST:
+                                model_data = model_reader[model].data[var]
+                                model_tseries = model_data.to_time_series_single_coord(latitude=data.latitude, 
+                                                                                       longitude=data.longitude)
+                                d = pya.StationData(latitude=data.latitude, 
+                                                    longitude=data.longitude,
+                                                    altitude=data.altitude, 
+                                                    station_name=data.station_name)
+                                
+                                d[var] = model_tseries[var]
+                                
+                                station_data_to_old_ascii(OUT_DIRS_RESULTS[model][obs_id], 
+                                                          d, var)
+                                
+                                
+                                
+                                        
         
         
                                     
