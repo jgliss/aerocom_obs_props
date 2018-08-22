@@ -60,12 +60,11 @@ def station_data_to_old_ascii(out_dir, station_data, var):
 MODEL_LIST = ['ECMWF_CAMS_REAN']
 
 # Obs data and variables
-OBS_NETWORKS = {'AeronetSunV2Lev2.daily' : ['od550aer',
+OBS_NETWORKS = {'AeronetSunV3Lev2.daily' : ['od550aer',
+                                            'ang4487aer'],
+                'AeronetSunV2Lev2.daily' : ['od550aer',
                                             'ang4487aer']}
-# =============================================================================
-#                           'AeronetSunV3Lev2.daily' : ['od550aer',
-#                                                       'ang4487aer']}
-# =============================================================================
+
                #'EBASMC'] # ec550aer, ...
                
 OUT_DIR = './output/'
@@ -74,10 +73,6 @@ OUT_DIRS_RESULTS = od()
 
 OUT_BASE = '/lustre/storeA/project/aerocom/aerocom1/AEROCOM_OBSDATA/Export/'
 
-OLD_DATA_DIR = OUT_BASE + 'AeronetSun2.0.bak/'
-EXAMPLE_FILE = 'od550aer_daily_MunichUniversity.txt'
-
-OUT_BASE = OUT_DIR
 OUT_DIRS_RESULTS['AeronetSunV2Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV2/'
 OUT_DIRS_RESULTS['AeronetSunV3Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV3/'
 OUT_DIRS_RESULTS['ECMWF_CAMS_REAN'] = od()
@@ -111,9 +106,6 @@ if __name__ == "__main__":
     print('Reading obs data')
     # Load networks individually for now (easier for analysis below)
     obs_all = od()
-    
-    with open(os.path.join(OLD_DATA_DIR, EXAMPLE_FILE), 'r') as f:
-        lines = f.readlines()
     
     if EVAL:
         for network, vars_to_retrieve in OBS_NETWORKS.items():
