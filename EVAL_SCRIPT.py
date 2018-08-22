@@ -8,14 +8,11 @@ import os
 from collections import OrderedDict as od
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import pyaerocom as pya
 import logging
 
 ### GLOBAL SETTINGS
-
-
 YEARS = [2010, 2008, 9999]
 
 MODEL_LIST = ['CAM6-Oslo_NF2kNucl_7jun2018AK',
