@@ -33,28 +33,29 @@ def station_data_to_old_ascii(out_dir, station_data, var):
     HEAD_LINE = 'datestring\tyear\tmonth\tday\thour\tminute\tsecond\tvalue\n'
     
     data = s[var]
-    times, vals = data.index, data.values
-    with open(FILE, 'w') as f:
-        f.write('      12\n')
-        f.write('latitude:      {:.4f}\n'.format(s.latitude))
-        f.write('longitude:      {:.4f}\n'.format(s.longitude))
-        f.write('altitude:      {:.4f}\n'.format(s.altitude))
-        f.write('station name:{}\n'.format(name))
-        f.write('\n\n\n\n\n')
-        f.write(HEAD_LINE)
-        for i, t in enumerate(times):
-            val = vals[i]
-            if np.isnan(val):
-                val = 'NaN'
-                
-            f.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(t,
-                                                              t.year,
-                                                              t.month, 
-                                                              t.day,
-                                                              t.hour, 
-                                                              t.minute, 
-                                                              t.second,
-                                                              val))
+    if not len(data) == 1:
+        times, vals = data.index, data.values
+        with open(FILE, 'w') as f:
+            f.write('      12\n')
+            f.write('latitude:      {:.4f}\n'.format(s.latitude))
+            f.write('longitude:      {:.4f}\n'.format(s.longitude))
+            f.write('altitude:      {:.4f}\n'.format(s.altitude))
+            f.write('station name:{}\n'.format(name))
+            f.write('\n\n\n\n\n')
+            f.write(HEAD_LINE)
+            for i, t in enumerate(times):
+                val = vals[i]
+                if np.isnan(val):
+                    val = 'NaN'
+                    
+                f.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(t,
+                                                                  t.year,
+                                                                  t.month, 
+                                                                  t.day,
+                                                                  t.hour, 
+                                                                  t.minute, 
+                                                                  t.second,
+                                                                  val))
 
 
 MODEL_LIST = ['ECMWF_CAMS_REAN']
@@ -97,7 +98,7 @@ PD_FREQ = pya.helpers.TS_TYPE_TO_PANDAS_FREQ[TS_TYPE]
 START='1990'
 STOP='2020'
 if __name__ == "__main__":
-    pya.change_verbosity('critical')
+    #pya.change_verbosity('critical')
     VARS = var_list(OBS_NETWORKS)
 
     read_obs = pya.io.ReadUngridded()
