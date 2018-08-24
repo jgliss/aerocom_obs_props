@@ -28,7 +28,11 @@ GRIDDED_OBS_NETWORKS = ['MODIS6.terra', #od550aer
 READ_PROBLEMATIC = {}
 
 # Obs data and variables
-UNGRIDDED_OBS_NETWORKS = {'AeronetSunV2Lev2.daily' : 'od550aer',
+UNGRIDDED_OBS_NETWORKS = {'EBASMC'                 : ['absc550aer', # light absorption coefficient
+                                                      'absc550lt1aer',
+                                                      'scatc550aer',
+                                                      'scatc550lt1aer'],
+                          'AeronetSunV2Lev2.daily' : 'od550aer',
                           'AeronetSunV3Lev2.daily' : 'od550aer',
                           'AeronetSDAV2Lev2.daily' : ['od550lt1aer', 
                                                       'od550gt1aer'],
@@ -100,7 +104,7 @@ if __name__=="__main__":
 ### OPTIONS 
     RELOAD = 1
     RUN_EVAL = 1
-    EVAL_UNGRIDDED = 0
+    EVAL_UNGRIDDED = 1
     EVAL_GRIDDED_OBS = 1
     TEST = 0
     PLOT_STATIONS = 0
