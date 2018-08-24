@@ -7,6 +7,7 @@ import os
 import pyaerocom as pya
 import logging
 import numpy as np
+import shutil
 from collections import OrderedDict as od
 
 def var_list(networks):
@@ -58,46 +59,71 @@ def station_data_to_old_ascii(out_dir, station_data, var):
                                                                   val))
 
 
+def _prep_dir(DIR):
+    if RECOMPUTE_EXISTING and os.path.exists(DIR):
+        print('Deleting existing directory and all its contents')
+        shutil.rmtree(DIR)
+    if not os.path.exists(DIR):
+        os.mkdir(DIR)
+    if len(os.listdir(DIR)) > 0:
+        return True
+    return False
+
+def init_output_dirs():
+    ignore_eval = []
+    for model_or_obs, val in OUT_DIRS_RESULTS.items():
+        if isinstance(val, str):
+            if _prep_dir(val): #RECOMPUTE_EXISTING is False and there were already files in folder, will be ignored
+                ignore_eval.append(model_or_obs)
+
+        elif isinstance(val, dict):
+            for obs, DIR in val.items():
+                if isinstance(DIR, str):
+                    if not _prep_dir(DIR) and model_or_obs in ignore_eval:
+                        raise IOError
+    return ignore_eval
+                    
 MODEL_LIST = ['ECMWF_CAMS_REAN']
 
 # Obs data and variables
-OBS_NETWORKS = {'AeronetSunV3Lev2.daily' : ['od550aer',
+OBS_NETWORKS = {'EBASMC'                 : ['absc550aer', # light absorption coefficient
+                                            'absc550lt1aer',
+                                            'scatc550aer',
+                                            'scatc550lt1aer'],
+                'AeronetSunV3Lev2.daily' : ['od550aer',
                                             'ang4487aer'],
                 'AeronetSunV2Lev2.daily' : ['od550aer',
-                                            'ang4487aer']}
-
-               #'EBASMC'] # ec550aer, ...
-               
+                                            'ang4487aer']} # ec550aer, ...
+                
 OUT_DIR = './output/'
 
 OUT_DIRS_RESULTS = od()
 
 OUT_BASE = '/lustre/storeA/project/aerocom/aerocom1/AEROCOM_OBSDATA/Export/'
 
+### output dirs obs data
 OUT_DIRS_RESULTS['AeronetSunV2Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV2/'
 OUT_DIRS_RESULTS['AeronetSunV3Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV3/'
+OUT_DIRS_RESULTS['EBASMC'] = OUT_BASE + 'Jonas/EBASMC/'
+
+### output dirs collocated model data
 OUT_DIRS_RESULTS['ECMWF_CAMS_REAN'] = od()
 OUT_DIRS_RESULTS['ECMWF_CAMS_REAN']['AeronetSunV2Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV2-ECMWF2018/'
 OUT_DIRS_RESULTS['ECMWF_CAMS_REAN']['AeronetSunV3Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV3-ECMWF2018/'
-
-for k, v in OUT_DIRS_RESULTS.items():
-    if isinstance(v, str) and not os.path.exists(v):
-        os.mkdir(v)
-    elif isinstance(v, dict):
-        for key, val in v.items():
-            if isinstance(val, str) and not os.path.exists(val):
-                os.mkdir(val)
-
-
+OUT_DIRS_RESULTS['ECMWF_CAMS_REAN']['EBASMC'] = OUT_BASE + 'Jonas/EBASMC-ECMWF2018/'
 
 INCLUDE_MODELS = True
+RECOMPUTE_EXISTING = True
 EVAL = 1
 
 TS_TYPE='daily'
 PD_FREQ = pya.helpers.TS_TYPE_TO_PANDAS_FREQ[TS_TYPE]
 START='1990'
 STOP='2020'
+
 if __name__ == "__main__":
+    ignore = init_output_dirs()
+   
     #pya.change_verbosity('critical')
     VARS = var_list(OBS_NETWORKS)
 
@@ -126,22 +152,25 @@ if __name__ == "__main__":
             for data in stat_data:
                 if data is not None:
                     for var in VARS:
-                        station_data_to_old_ascii(OUT_DIRS_RESULTS[obs_id], 
-                                                  data, var)
+                        if var in data:
+                            station_data_to_old_ascii(OUT_DIRS_RESULTS[obs_id], 
+                                                      data, var)
                         if INCLUDE_MODELS:
                             for model in MODEL_LIST:
-                                model_data = model_reader[model].data[var]
-                                model_tseries = model_data.to_time_series_single_coord(latitude=data.latitude, 
-                                                                                       longitude=data.longitude)
-                                d = pya.StationData(latitude=data.latitude, 
-                                                    longitude=data.longitude,
-                                                    altitude=data.altitude, 
-                                                    station_name=data.station_name)
-                                
-                                d[var] = model_tseries[var]
-                                
-                                station_data_to_old_ascii(OUT_DIRS_RESULTS[model][obs_id], 
-                                                          d, var)
+                                m = model_reader[model]
+                                if var in m.vars:
+                                    model_data = model_reader[model].data[var]
+                                    model_tseries = model_data.to_time_series_single_coord(latitude=data.latitude, 
+                                                                                           longitude=data.longitude)
+                                    d = pya.StationData(latitude=data.latitude, 
+                                                        longitude=data.longitude,
+                                                        altitude=data.altitude, 
+                                                        station_name=data.station_name)
+                                    
+                                    d[var] = model_tseries[var]
+                                    
+                                    station_data_to_old_ascii(OUT_DIRS_RESULTS[model][obs_id], 
+                                                              d, var)
                                 
                                 
                                 
