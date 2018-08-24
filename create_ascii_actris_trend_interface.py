@@ -25,7 +25,7 @@ def station_data_to_old_ascii(out_dir, station_data, var):
     if not os.path.exists(out_dir):
         raise IOError('output directory does not exist')
     s = station_data
-    name = s['station_name'].replace('_','').replace('-','')
+    name = s['station_name'].replace('_','').replace('-','').replace(' ','')
     name = ''.join(name.split('-'))
     save_name = '{}_{}_{}.txt'.format(var, TS_TYPE, name)
     print(save_name)
@@ -155,22 +155,22 @@ if __name__ == "__main__":
                         if var in data:
                             station_data_to_old_ascii(OUT_DIRS_RESULTS[obs_id], 
                                                       data, var)
-                        if INCLUDE_MODELS:
-                            for model in MODEL_LIST:
-                                m = model_reader[model]
-                                if var in m.vars:
-                                    model_data = model_reader[model].data[var]
-                                    model_tseries = model_data.to_time_series_single_coord(latitude=data.latitude, 
-                                                                                           longitude=data.longitude)
-                                    d = pya.StationData(latitude=data.latitude, 
-                                                        longitude=data.longitude,
-                                                        altitude=data.altitude, 
-                                                        station_name=data.station_name)
-                                    
-                                    d[var] = model_tseries[var]
-                                    
-                                    station_data_to_old_ascii(OUT_DIRS_RESULTS[model][obs_id], 
-                                                              d, var)
+                            if INCLUDE_MODELS:
+                                for model in MODEL_LIST:
+                                    m = model_reader[model]
+                                    if var in m.vars:
+                                        model_data = model_reader[model].data[var]
+                                        model_tseries = model_data.to_time_series_single_coord(latitude=data.latitude, 
+                                                                                               longitude=data.longitude)
+                                        d = pya.StationData(latitude=data.latitude, 
+                                                            longitude=data.longitude,
+                                                            altitude=data.altitude, 
+                                                            station_name=data.station_name)
+                                        
+                                        d[var] = model_tseries[var]
+                                        
+                                        station_data_to_old_ascii(OUT_DIRS_RESULTS[model][obs_id], 
+                                                                  d, var)
                                 
                                 
                                 
