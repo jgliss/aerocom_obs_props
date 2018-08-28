@@ -21,9 +21,10 @@ MODEL_LIST = ['CAM6-Oslo_NF2kNucl_7jun2018AK',
               'TM5_AP3-INSITU',
               'ECMWF_CAMS_REAN']
 
-GRIDDED_OBS_NETWORKS = ['MODIS6.terra', #od550aer
-                        'MODIS6.aqua'] #od550aer
-                        #'CALIOP3'] #od550aer
+GRIDDED_OBS_NETWORKS = ['CALIOP3',
+                        'MODIS6.terra', #od550aer
+                        'MODIS6.aqua', #od550aer
+                        ] #od550aer
 
 # will be filled during the import
 READ_PROBLEMATIC = {}
@@ -74,6 +75,8 @@ def chk_make_dir(base, name):
     return d
 
 def init_output_directories(model_reader, obs_data, out_base_dir):
+    if not os.path.exists(out_base_dir):
+        os.mkdir(out_base_dir)
     dirs = {}
     for name, data in model_reader.results.items():
         model_base = chk_make_dir(out_base_dir, name)
@@ -135,7 +138,7 @@ if __name__=="__main__":
                 ungridded_obs_all[network] = read_ungridded_obs.read_dataset(
                         network, vars_to_retrieve=vars_to_retrieve)
         
-            dirs = init_output_directories(read_models, ungridded_obs_all, OUT_DIR)
+        dirs = init_output_directories(read_models, ungridded_obs_all, OUT_DIR)
         
     if RUN_EVAL:
 ### ANALYSIS           
@@ -163,7 +166,7 @@ if __name__=="__main__":
                                               'Not yet implemented'.format(model_id,
                                                                            obs_id)) 
                                         print(msg)
-                                        raise Exception
+                    
                                         with open(OUT_STATS, 'a') as f:
                                             f.write('\n{}\n\n'.format(msg))
                                         

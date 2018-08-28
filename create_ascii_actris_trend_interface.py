@@ -95,11 +95,16 @@ OBS_NETWORKS = {'EBASMC'                 : ['absc550aer', # light absorption coe
                 'AeronetSunV2Lev2.daily' : ['od550aer',
                                             'ang4487aer']} # ec550aer, ...
                 
-OUT_DIR = './output/'
+OBS_NETWORKS = {'EBASMC' : ['absc550aer', # light absorption coefficient
+                            'absc550lt1aer',
+                            'scatc550aer',
+                            'scatc550lt1aer']}
 
 OUT_DIRS_RESULTS = od()
 
 OUT_BASE = '/lustre/storeA/project/aerocom/aerocom1/AEROCOM_OBSDATA/Export/'
+
+#OUT_BASE = './out_trends_interface/'
 
 ### output dirs obs data
 OUT_DIRS_RESULTS['AeronetSunV2Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV2/'
@@ -112,29 +117,29 @@ OUT_DIRS_RESULTS['ECMWF_CAMS_REAN']['AeronetSunV2Lev2.daily'] = OUT_BASE + 'Jona
 OUT_DIRS_RESULTS['ECMWF_CAMS_REAN']['AeronetSunV3Lev2.daily'] = OUT_BASE + 'Jonas/AERONETSunV3-ECMWF2018/'
 OUT_DIRS_RESULTS['ECMWF_CAMS_REAN']['EBASMC'] = OUT_BASE + 'Jonas/EBASMC-ECMWF2018/'
 
-INCLUDE_MODELS = True
+INCLUDE_MODELS = False
 RECOMPUTE_EXISTING = True
 EVAL = 1
 
-TS_TYPE='daily'
+TS_TYPE = 'daily'
 PD_FREQ = pya.helpers.TS_TYPE_TO_PANDAS_FREQ[TS_TYPE]
-START='1990'
-STOP='2020'
+START = '1990'
+STOP = '2020'
 
 if __name__ == "__main__":
-    ignore = init_output_dirs()
-   
-    #pya.change_verbosity('critical')
+    pya.change_verbosity('critical')
     VARS = var_list(OBS_NETWORKS)
 
+
     read_obs = pya.io.ReadUngridded()
-    read_obs.logger.setLevel(logging.INFO)
+    read_obs.logger.setLevel(logging.CRITICAL)
     
-    print('Reading obs data')
     # Load networks individually for now (easier for analysis below)
     obs_all = od()
     
     if EVAL:
+        ignore = init_output_dirs()
+        print('Reading obs data')
         for network, vars_to_retrieve in OBS_NETWORKS.items():
                 obs_all[network] = read_obs.read_dataset(
                         network, vars_to_retrieve=vars_to_retrieve)

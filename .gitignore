@@ -103,8 +103,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# output directory
+# output directories
 output/
+out_trends_interface/
 
 # certain file types
 *.pdf
