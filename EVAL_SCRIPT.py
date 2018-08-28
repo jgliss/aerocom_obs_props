@@ -18,7 +18,8 @@ YEARS = [2010, 2008, 9999]
 MODEL_LIST = ['CAM6-Oslo_NF2kNucl_7jun2018AK',
               'OsloCTM2_INSITU',
               'TM5_AP3-CTRL2016',
-              'TM5_AP3-INSITU']
+              'TM5_AP3-INSITU',
+              'ECMWF_CAMS_REAN']
 
 GRIDDED_OBS_NETWORKS = ['MODIS6.terra', #od550aer
                         'MODIS6.aqua'] #od550aer
