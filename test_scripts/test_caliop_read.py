@@ -7,7 +7,7 @@ Created on Fri Aug 24 14:48:03 2018
 """
 import pyaerocom as pya
 
-MODEL = 'ECMWF_CAMS_REAN'
+MODEL = 'TM5_AP3-CTRL2016'
 OBS = 'CALIOP3'
 
 VAR = 'od550aer'
@@ -31,3 +31,5 @@ if __name__=='__main__':
                              stop_time=STOP)
     
     print(obs)
+    
+    obs_yearly = obs.regrid(model)
