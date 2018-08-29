@@ -185,6 +185,8 @@ if __name__=="__main__":
                                     
                                     data = pya.collocation.collocate_gridded_gridded(
                                                              model, obs,
+                                                             start=start_str,
+                                                             stop=stop_str,
                                                              ts_type=ts_type,
                                                              filter_name=filter_name)
                                     
@@ -237,8 +239,8 @@ if __name__=="__main__":
                                 
                                 data = pya.collocation.collocate_gridded_ungridded_2D(
                                             model, ungridded_obs, ts_type=ts_type, 
-                                           start=start_str, stop=stop_str, 
-                                           filter_name=filter_name)
+                                            start=start_str, stop=stop_str, 
+                                            filter_name=filter_name)
                                 
                                 data.to_csv(OUT_DIR_RESULTS)
                                 
