@@ -15,14 +15,20 @@ import logging
 ### GLOBAL SETTINGS
 YEARS = [2010, 2008, 9999]
 
-MODEL_LIST = ['ECMWF_CAMS_REAN',
-              'CAM6-Oslo_NF2kNucl_7jun2018AK',
+MODEL_LIST = ['CAM6-Oslo_NF2kNucl_7jun2018AK',
               'OsloCTM2_INSITU',
               'TM5_AP3-CTRL2016',
-              'TM5_AP3-INSITU']
+              'TM5_AP3-INSITU',
+              'ECMWF_CAMS_REAN']
 
-GRIDDED_OBS = {'MODIS6.terra'          :   ['od550aer'],
-               'MODIS6.aqua'           :   ['od550aer']}
+GRIDDED_OBS = {'AATSR_SU_v4.3'         :   ['abs550aer', 
+                                                     'ang4487aer', 
+                                                     'od550aer', 
+                                                     'od550dust', 
+                                                     'od550gt1aer', 
+                                                     'od550lt1aer'],
+                        'MODIS6.terra'          :   ['od550aer'],
+                        'MODIS6.aqua'           :   ['od550aer']}
 
 # will be filled during the import
 READ_PROBLEMATIC = {}
@@ -35,7 +41,9 @@ UNGRIDDED_OBS = {'AeronetSunV2Lev2.daily' : ['od550aer', 'ang4487aer'],
                  'AeronetSDAV3Lev2.daily' : ['od550lt1aer', 
                                              'od550gt1aer'],
                  pya.const.AERONET_INV_V2L2_DAILY_NAME : 'abs550aer',
-                 pya.const.AERONET_INV_V3L2_DAILY_NAME : 'abs550aer'}
+                 pya.const.AERONET_INV_V3L2_DAILY_NAME : 'abs550aer'
+                }
+               #'EBASMC'] # ec550aer, ...
 
 
 ### Paths and directories
@@ -120,8 +128,7 @@ if __name__=="__main__":
         
         print('Reading satellite data')
         ### Read gridded obs data
-        grid_obs = [k for k in GRIDDED_OBS.keys()]
-        read_gridded_obs = pya.io.ReadGriddedMulti(grid_obs)
+        read_gridded_obs = pya.io.ReadGriddedMulti(GRIDDED_OBS)
         read_gridded_obs.read_individual_years(VARS, YEARS)
         
         read_ungridded_obs = pya.io.ReadUngridded()
@@ -141,7 +148,7 @@ if __name__=="__main__":
 ### ANALYSIS           
         PLOT_STATIONS = 0
         # temporal resolution
-        TS_TYPES = ['daily', 'monthly', 'yearly']
+        TS_TYPES = ['yearly']#, 'yearly']
         
         filter_name = 'WORLD-noMOUNTAINS'
         for ts_type in TS_TYPES:
