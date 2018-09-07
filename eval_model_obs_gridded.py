@@ -8,28 +8,18 @@ import os
 import numpy as np
 from functools import reduce
 import pyaerocom as pya
+import matplotlib.pyplot as plt
 
 from models import all_model_ids
 
-### GLOBAL SETTINGS
-class AnalysisSetup(pya.utils.BrowseDict):
-    def __init__(self, **kwargs):
-        self.vars = None
-        
-        self.model_id = None
-        self.obs_id = None
-        
-        self.filer_name = None
-        self.ts_types_read = None
-        self.ts_types_ana = None
-        self.years = None
-        
-# all temporal resolutions that are supposed to be read 
-TS_TYPES_READ = ['monthly', 'daily']
-TS_TYPES_READ_ALT = {'daily' : ['3hourly']}
+TS_TYPES_SETUP = {'monthly'     :   ['monthly', 'yearly'],
+                  'daily'       :   ['monthly', 'yearly', 'daily']}
 
-# all temporal resolutions for which analysis is performed
-TS_TYPES_ANA = ['yearly', 'monthly', 'daily']
+# all temporal resolutions that are supposed to be read 
+TS_TYPES_READ = list(TS_TYPES_SETUP.keys())
+
+# alternative ts_types in case one of the provided in setup is not in dataset
+TS_TYPES_READ_ALT = {'daily'    :   ['hourly', '3hourly']}
 
 # Years to be analysed
 YEARS = sorted([2008, 2010])
@@ -38,8 +28,6 @@ ALL_MODELS = all_model_ids()
 
 MODEL_ID = ALL_MODELS[0]
 OBS_ID = 'MODIS6.terra'
-
-
 
 VARS = ['od550aer']
 
@@ -50,7 +38,7 @@ OUT_DIR = './output/'
 
 OUT_DIR_SCAT = os.path.join(OUT_DIR, 'scatter_plots')
 
-OUT_DIR_RESULTS = os.path.join(OUT_DIR, 'results_csv')
+OUT_DIR_RESULTS = os.path.join(OUT_DIR, 'collocated_data')
                     
 _PLOTNAME_BASESTR = 'mALLYEAR{}'   
 
@@ -94,6 +82,7 @@ if __name__=="__main__":
             for ts_type_alt in ts_types_alt:
                 if ts_type_alt in model_reader.ts_types:
                     ts_type_matches.append(ts_type_alt)
+                    TS_TYPES_SETUP[ts_type_alt] = TS_TYPES_SETUP[ts_type]
                     break
                 
     if len(ts_type_matches) == 0:
@@ -104,7 +93,7 @@ if __name__=="__main__":
     for year in year_matches:
         start, stop = start_stop_from_year(year)
         for ts_type in ts_type_matches:
-            
+            ts_types_ana = TS_TYPES_SETUP[ts_type]
             model_reader.read(var_matches, start_time=year,
                               ts_type = ts_type,
                               flex_ts_type=False)
@@ -119,7 +108,7 @@ if __name__=="__main__":
                 exceptions.append('{}_{}: No data available'.format(year, ts_type))
             else:
                 for var, model_data in model_reader.data.items():
-                    for ts_type_ana in TS_TYPES_ANA:
+                    for ts_type_ana in ts_types_ana:
                         if TS_TYPES.index(ts_type_ana) >= TS_TYPES.index(ts_type):
                             if var in obs_reader.data:
                                 obs_data = obs_reader.data[var]
@@ -129,13 +118,13 @@ if __name__=="__main__":
                                                 start=start, stop=stop, 
                                                 filter_name=FILTER)
                                     
-                                data_coll.to_csv(OUT_DIR_RESULTS)
+                                data_coll.to_netcdf(OUT_DIR_RESULTS)
                                 save_name_fig = data_coll.save_name_aerocom + '_SCAT.png'
                         
                                 data_coll.plot_scatter(savefig=True, 
                                                    save_dir=OUT_DIR_SCAT,
                                                    save_name=save_name_fig)
-                        
+                                plt.close('all')
             
 # =============================================================================
 #         for year in YEARS:

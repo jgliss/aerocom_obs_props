@@ -36,9 +36,8 @@ YEARS = sorted([2008, 2010])
 ALL_MODELS = all_model_ids()
 
 MODEL_ID = ALL_MODELS[0]
+
 OBS_ID = 'AeronetSunV3Lev2.daily'
-
-
 
 VARS = ['od550aer', 'ang4487aer']
 
