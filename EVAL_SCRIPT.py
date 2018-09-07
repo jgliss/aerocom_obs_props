@@ -21,6 +21,8 @@ MODEL_LIST = ['ECMWF_CAMS_REAN',
               'TM5_AP3-CTRL2016',
               'TM5_AP3-INSITU']
 
+MODEL_LIST = MODEL_LIST[2:]
+
 GRIDDED_OBS = {'MODIS6.terra'          :   ['od550aer'],
                'MODIS6.aqua'           :   ['od550aer']}
 
@@ -177,7 +179,7 @@ if __name__=="__main__":
                                     obs = obs_reader.data_yearly[var][year]
                                     
                                     start_str = str(year) 
-                                    stop_str = '{}-12-31 23:59:00'.format(year) 
+                                    stop_str = '{}-12-31 23:59:59'.format(year) 
                                     
                                     data = pya.collocation.collocate_gridded_gridded(
                                                              model, obs,
@@ -199,8 +201,7 @@ if __name__=="__main__":
                                     save_name_fig = data.save_name_aerocom + '_SCAT.png'
                                     data.plot_scatter(savefig=True, 
                                                       save_dir=OUT_DIR_SCAT,
-                                                      save_name=save_name_fig, 
-                                                      add_data_missing_note=add_note)
+                                                      save_name=save_name_fig)
                                     
                                     data.to_csv(OUT_DIR_RESULTS)
                                     
@@ -253,8 +254,7 @@ if __name__=="__main__":
                                 save_name_fig = data.save_name_aerocom + '_SCAT.png'
                                 data.plot_scatter(savefig=True, 
                                                   save_dir=OUT_DIR_SCAT,
-                                                  save_name=save_name_fig, 
-                                                  add_data_missing_note=add_note)
+                                                  save_name=save_name_fig)
                                 
                                 plt.close('all')
                                     
