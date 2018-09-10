@@ -47,7 +47,15 @@ class AnalysisSetup(pya.utils.BrowseDict):
         
         self.update(**kwargs)
         
-    
+ 
+def get_all_vars(OBS_INFO_DICT):
+    all_vars = []
+    for obs_id, variables in OBS_INFO_DICT.items():
+        for variable in list(variables):
+            if not variable in all_vars:
+                all_vars.append(variable)
+    return all_vars
+
 class _TS_TYPESetup(pya.utils.BrowseDict):
     def __init__(self, *args, **kwargs):
         self.read_alt = {}

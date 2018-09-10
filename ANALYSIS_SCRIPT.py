@@ -25,23 +25,27 @@ MODEL_ID = ALL_MODELS[0]
 
 OBS_INFO = {'MODIS6.terra'          :   ['od550aer'],
             'MODIS6.aqua'           :   ['od550aer'],
-            'AeronetSunV2Lev2.daily' : ['od550aer', 'ang4487aer'],
-            'AeronetSunV3Lev2.daily' : ['od550aer', 'ang4487aer'],
-            'AeronetSDAV2Lev2.daily' : ['od550lt1aer', 
-                                           'od550gt1aer'],
-            'AeronetSDAV3Lev2.daily' : ['od550lt1aer', 
-                                           'od550gt1aer'],
+            'AeronetSunV2Lev2.daily' :  ['od550aer', 'ang4487aer'],
+            'AeronetSunV3Lev2.daily' :  ['od550aer', 'ang4487aer'],
+            'AeronetSDAV2Lev2.daily' :  ['od550lt1aer', 
+                                         'od550gt1aer'],
+            'AeronetSDAV3Lev2.daily' :  ['od550lt1aer', 
+                                         'od550gt1aer'],
             pya.const.AERONET_INV_V2L2_DAILY_NAME : ['abs550aer'],
             pya.const.AERONET_INV_V3L2_DAILY_NAME : ['abs550aer']}
+
+# =============================================================================
+# OBS_INFO = {'EBASMC'    :   ['absc550aer', 
+#                              'scatc550aer']}
+# =============================================================================
 
 OBS_IDS = list(OBS_INFO.keys())
 
 FILTER = 'WORLD-noMOUNTAINS'
 
 ### output directories
-OUT_DIR = './output/'
-
-                    
+OUT_DIR = './output/'       
+             
 if __name__ == '__main__':
     from time import time
     
