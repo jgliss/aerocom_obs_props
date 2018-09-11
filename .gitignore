@@ -105,6 +105,7 @@ venv.bak/
 
 # output directories
 output/
+output_TEMP/
 out_trends_interface/
 
 # certain file types

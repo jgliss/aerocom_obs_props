@@ -13,12 +13,22 @@ MODEL = 'INCA-BCext_CTRL2016-PD'
 START =2010
 VAR = 'ang4487aer'
 
+def calc_ang4487aer_from_ods_cubes(cube_od1, cube_od2):
+    wvl1 = pya.variable.VarNameInfo(cube_od1.var_name).wavelength_nm
+    wvl2 = pya.variable.VarNameInfo(cube_od2.var_name).wavelength_nm
+    
+    wvlr = np.log(wvl1 / wvl2)
+    logr = iris.analysis.maths.log(cube_od1 / cube_od2)
+    return iris.analysis.maths.divide(logr, wvlr)*-1
+
 if __name__=='__main__':
     ### Model data
     reader = pya.io.ReadGridded(MODEL)
     
-    od443aer = reader.read_var('od443aer').grid
+    ang4487aer = reader.read_var('ang4487aer')
+    
     od550aer = reader.read_var('od550aer').grid
+    od443aer = reader.read_var('od443aer').grid
     od865aer = reader.read_var('od865aer').grid
     
     r = od443aer / od865aer

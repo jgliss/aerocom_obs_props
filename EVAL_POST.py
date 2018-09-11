@@ -12,8 +12,7 @@ import EVAL_SCRIPT as EVAL
 
 def get_info_filename(fpath):
     return pya.collocateddata.CollocatedData().get_meta_from_filename(fpath)
-        
-        
+
 def load_result_files(out_dir=EVAL.OUT_DIR_RESULTS):
     files = os.listdir(out_dir)
     results = []

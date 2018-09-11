@@ -9,6 +9,7 @@ import os
 import numpy as np
 import pyaerocom as pya
 from functools import reduce
+import pandas as pd
 import matplotlib.pyplot as plt
 
 class AnalysisSetup(pya.utils.BrowseDict):
@@ -138,9 +139,122 @@ def check_colldata_exists(data_dir, colldata_save_name):
         return True
     return False
 
-def get_results_info_avail(result_dir):
-    pass
+def get_file_list(result_dir, models, verbose=True):
+    all_files = []
+    for item in os.listdir(result_dir):
+        if item in models:
+            data_dir = os.path.join(result_dir, item, 'data/')
+            files = os.listdir(data_dir)
+            if len(files) > 0:
+                if verbose:
+                    print('Importing {} result files from model {}'
+                          .format(len(files), item))
+                for f in files:
+                    if f.endswith('COLL.nc'):
+                        all_files.append(os.path.join(data_dir, f))
+    return all_files
 
+def load_result_files(file_list, verbose=True):
+    results = []
+    data = pya.CollocatedData()
+    try:
+        from ipywidgets import FloatProgress
+        from IPython.display import display
+        
+        max_count = len(file_list)
+        
+        f = FloatProgress(min=0, max=max_count) # instantiate the bar
+        display(f) # display the bar
+    except Exception as e:
+        print('Failed to instantiate progress bar: {}'.format(repr(e)))
+    
+    for file in file_list:
+        info = data.get_meta_from_filename(file)
+        info['model_id'] = info['data_source'][1]
+        info['obs_id'] = info['data_source'][0]
+        info['year'] = info['start'].year
+        info['data'] = data.read_netcdf(file).to_dataframe()
+        obs = info['data']['ref'].values
+        model = info['data']['data'].values
+        stats = pya.mathutils.calc_statistics(model, obs)
+        info.update(stats)
+        
+        results.append(info)
+        if f is not None:
+            f.value += 1
+    return results
+    
+def results_to_dataframe(results):
+    """Based on output of :func:`get_result_info`"""
+    header = ['Model', 'Year', 'Variable', 'Obs', 'Freq', 'FreqSRC',
+              'Bias', 'RMS', 'R', 'FGE']
+    data = []
+    for info in results:
+        file_data = [info['model_id'], 
+                     info['year'], 
+                     info['var_name'], 
+                     info['obs_id'],
+                     info['ts_type'],
+                     info['ts_type_src'],
+                     info['nmb'], 
+                     info['rms'], 
+                     info['R'], 
+                     info['fge']]
+        
+        data.append(file_data)
+    df = pd.DataFrame(data, columns=header)
+    df.set_index(['Model', 'Year', 'Variable', 'Obs'], inplace=True)
+    df.sort_index(inplace=True)
+    return df
+    
+def slice_dataframe(df, values, levels):
+    """Crop a selection from a MultiIndex Dataframe
+    
+    Parameters
+    ----------
+    df : DataFrame
+        
+    
+    """
+    names = df.index.names
+    num_indices = len(names)
+    if num_indices == 1:
+        # no Multiindex
+        return df.loc[values, :]
+    else:
+        # Multiindex
+        if levels is None:
+            print("Input levels not defined for MultiIndex, assuming 0")
+            levels = [0]
+        elif isinstance(levels, str): #not a list
+            levels, values = [levels], [values]
+        else: #not a string and not None, so either a list or a number (can be checked using iter())
+            try:
+                iter(levels)
+            except:
+                #input is single level / value pair
+                levels, values = [levels], [values]        
+    
+        if isinstance(levels[0], str):
+            level_nums = [names.index(x) for x in levels]
+        else:
+            level_nums = levels
+        
+        indexer = []
+        for idx in range(len(names)):
+            if idx in level_nums:
+                pos = level_nums.index(idx)
+                indexer.append(values[pos])
+            else:
+                indexer.append(slice(None))
+        df = df.loc[tuple(indexer), :]
+        
+        for i, level in enumerate(levels):
+            if len(values[i]) == 1:
+                df.index = df.index.droplevel(level)
+        df.sort_index(inplace=True)
+        return df
+    
 def perform_analysis(vars_to_analyse, model_id, obs_id, years, filter_name, 
                      ts_type_setup, out_basedir=None, logfile=None,
                      reanalyse_existing=False):
@@ -162,11 +276,6 @@ def _run_gridded_ungridded(vars_to_analyse, model_id, obs_id, years, filter_name
                            reanalyse_existing=False):
     # all temporal resolutions that are supposed to be read 
     dirs = check_prepare_dirs(out_basedir, model_id)
-    if reanalyse_existing:
-        for subdir in dirs.values():
-            files = os.listdir(subdir)
-            for file in files:
-                os.remove(os.path.join(subdir, file))
         
     obs_reader = pya.io.ReadUngridded()
     obs_data = obs_reader.read(obs_id, vars_to_analyse)
@@ -177,7 +286,7 @@ def _run_gridded_ungridded(vars_to_analyse, model_id, obs_id, years, filter_name
     model_reader = pya.io.ReadGridded(model_id)
     
     var_matches = list(reduce(np.intersect1d, (vars_to_analyse, 
-                                               model_reader.vars,
+                                               model_reader.vars_provided,
                                                obs_data.contains_vars)))
     
     if len(var_matches) == 0:
@@ -233,13 +342,15 @@ def _run_gridded_ungridded(vars_to_analyse, model_id, obs_id, years, filter_name
                                                       filter_name,
                                                       start,
                                                       stop)
-                    
-                        if not reanalyse_existing:
-                            if check_colldata_exists(out_dir, 
-                                                     savename):
+                        file_exists = check_colldata_exists(out_dir, 
+                                                            savename)
+                        if file_exists:
+                            if not reanalyse_existing:
                                 if logfile:
                                     logfile.write('SKIP: {}\n'.format(savename))
                                 continue
+                            else:
+                                os.remove(out_dir, savename)
                         
                         data_coll = pya.collocation.collocate_gridded_ungridded_2D(
                                                 model_data, obs_data, 
@@ -262,19 +373,14 @@ def _run_gridded_gridded(vars_to_analyse, model_id, obs_id, years, filter_name,
                          reanalyse_existing=False):
     # all temporal resolutions that are supposed to be read 
     dirs = check_prepare_dirs(out_basedir, model_id)
-    if reanalyse_existing:
-        for subdir in dirs.values():
-            files = os.listdir(subdir)
-            for file in files:
-                os.remove(os.path.join(subdir, file))
             
     ts_types = pya.const.GRID_IO.TS_TYPES
         
     model_reader = pya.io.ReadGridded(model_id)
     obs_reader = pya.io.ReadGridded(obs_id)
-    
+
     var_matches = list(reduce(np.intersect1d, (vars_to_analyse, 
-                                               model_reader.vars,
+                                               model_reader.vars_provided,
                                                obs_reader.vars)))
     
     if len(var_matches) == 0:
@@ -340,13 +446,16 @@ def _run_gridded_gridded(vars_to_analyse, model_id, obs_id, years, filter_name,
                                                       filter_name,
                                                       start,
                                                       stop)
-                    
-                        if not reanalyse_existing:
-                            if check_colldata_exists(out_dir, 
-                                                     savename):
+                        
+                        file_exists = check_colldata_exists(out_dir, 
+                                                            savename)
+                        if file_exists:
+                            if not reanalyse_existing:
                                 if logfile:
                                     logfile.write('SKIP: {}\n'.format(savename))
                                 continue
+                            else:
+                                os.remove(out_dir, savename)
                             
                         data_coll = pya.collocation.collocate_gridded_gridded(
                                         model_data, obs_data, 

@@ -21,8 +21,6 @@ YEARS = sorted([2008, 2010])
 
 ALL_MODELS = all_model_ids()
 
-MODEL_ID = ALL_MODELS[0]
-
 OBS_INFO = {'MODIS6.terra'          :   ['od550aer'],
             'MODIS6.aqua'           :   ['od550aer'],
             'AeronetSunV2Lev2.daily' :  ['od550aer', 'ang4487aer'],
@@ -56,6 +54,7 @@ if __name__ == '__main__':
     
     if ONLY_FIRST:
         OBS_IDS = [OBS_IDS[0]]
+    
     for OBS_ID in OBS_IDS:  
         VARS = OBS_INFO[OBS_ID]
         stp = helpers.AnalysisSetup(vars_to_analyse=VARS, 
