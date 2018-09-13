@@ -350,7 +350,7 @@ def _run_gridded_ungridded(vars_to_analyse, model_id, obs_id, years, filter_name
                                     logfile.write('SKIP: {}\n'.format(savename))
                                 continue
                             else:
-                                os.remove(out_dir, savename)
+                                os.remove(os.path.join(out_dir, savename))
                         
                         data_coll = pya.collocation.collocate_gridded_ungridded_2D(
                                                 model_data, obs_data, 
@@ -455,7 +455,7 @@ def _run_gridded_gridded(vars_to_analyse, model_id, obs_id, years, filter_name,
                                     logfile.write('SKIP: {}\n'.format(savename))
                                 continue
                             else:
-                                os.remove(out_dir, savename)
+                                os.remove(os.path.join(out_dir, savename))
                             
                         data_coll = pya.collocation.collocate_gridded_gridded(
                                         model_data, obs_data, 

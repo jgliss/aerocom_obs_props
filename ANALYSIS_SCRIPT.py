@@ -32,10 +32,8 @@ OBS_INFO = {'MODIS6.terra'          :   ['od550aer'],
             pya.const.AERONET_INV_V2L2_DAILY_NAME : ['abs550aer'],
             pya.const.AERONET_INV_V3L2_DAILY_NAME : ['abs550aer']}
 
-# =============================================================================
-# OBS_INFO = {'EBASMC'    :   ['absc550aer', 
-#                              'scatc550aer']}
-# =============================================================================
+OBS_INFO = {'EBASMC'    :   ['absc550aer', 
+                             'scatc550aer']}
 
 OBS_IDS = list(OBS_INFO.keys())
 
@@ -46,11 +44,13 @@ OUT_DIR = './output/'
              
 if __name__ == '__main__':
     from time import time
+    import traceback
     
     t0 = time()
-    REANALYSE_EXISTING = True
+    REANALYSE_EXISTING = False
     RUN_ANALYSIS = True
     ONLY_FIRST = False
+    RAISE_EXCEPTIONS = False
     
     if ONLY_FIRST:
         OBS_IDS = [OBS_IDS[0]]
@@ -96,7 +96,10 @@ if __name__ == '__main__':
                         helpers.perform_analysis(logfile=log, 
                                                  reanalyse_existing=REANALYSE_EXISTING,
                                                  **stp)
-                    except Exception as e:
-                        log.write('{}\n'.format(repr(e)))
+                    except:
+                        log.write('Failed to perform analysis: {}\n'.format(traceback.format_exc()))
+                        if RAISE_EXCEPTIONS:
+                            raise Exception(traceback.format_exc())
+                        
     dt = (time()-t0)/60
     print('Analysis finished. Total time: {} min'.format(dt))
