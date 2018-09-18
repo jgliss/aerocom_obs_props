@@ -12,7 +12,7 @@ from functools import reduce
 import pandas as pd
 import matplotlib.pyplot as plt
 
-class AnalysisSetup(pya.utils.BrowseDict):
+class AnalysisSetup(pya._lowlevel_helpers.BrowseDict):
     """Setup class for model / obs intercomparison
     
     An instance of this setup class can be used to run a collocation analysis
@@ -57,7 +57,7 @@ def get_all_vars(OBS_INFO_DICT):
                 all_vars.append(variable)
     return all_vars
 
-class _TS_TYPESetup(pya.utils.BrowseDict):
+class _TS_TYPESetup(pya._lowlevel_helpers.BrowseDict):
     def __init__(self, *args, **kwargs):
         self.read_alt = {}
         super(_TS_TYPESetup, self).__init__(*args, **kwargs)
