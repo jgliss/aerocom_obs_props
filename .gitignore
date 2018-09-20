@@ -107,6 +107,7 @@ venv.bak/
 output/
 output_TEMP/
 out_trends_interface/
+communication/
 
 # certain file types
 *.pdf
